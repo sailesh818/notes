@@ -54,6 +54,11 @@ class _NoteEditPageState extends State<NoteEditPage> {
       appBar: AppBar(
         title: Text(widget.note == null ? 'Add Note' : 'Edit Note'),
         actions: [
+          IconButton(
+            onPressed: _saveNote, 
+            icon: Icon(Icons.save)
+          ),
+          
           if (widget.note != null)
             IconButton(
               icon: Icon(Icons.delete),
