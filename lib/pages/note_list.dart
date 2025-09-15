@@ -29,7 +29,7 @@ class _NoteListPageState extends State<NoteListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Notes'),
+        title: Text('My Notes', style: TextStyle(fontWeight: FontWeight.bold),),
       ),
       body: notes.isEmpty
           ? Center(child: Text('No notes yet!'))

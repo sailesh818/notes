@@ -52,7 +52,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.note == null ? 'Add Note' : 'Edit Note'),
+        title: Text(widget.note == null ? 'Add Note' : 'Edit Note', style: TextStyle(fontWeight: FontWeight.bold),),
         actions: [
           IconButton(
             onPressed: _saveNote, 
@@ -88,7 +88,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _saveNote,
-                  child: Text('Save'),
+                  child: Text('Save', style: TextStyle(fontWeight: FontWeight.bold),),
                 ),
               ],
             ),
