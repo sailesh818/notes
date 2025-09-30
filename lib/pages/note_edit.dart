@@ -3,7 +3,7 @@ import 'package:notes_todo/db/db_helper.dart';
 import 'package:notes_todo/model/note.dart';
 
 class NoteEditPage extends StatefulWidget {
-  final Note? note; // null = new note
+  final Note? note;
   NoteEditPage({this.note});
 
   @override
@@ -12,8 +12,8 @@ class NoteEditPage extends StatefulWidget {
 
 class _NoteEditPageState extends State<NoteEditPage> {
   final _formKey = GlobalKey<FormState>();
-  TextEditingController _titleController = TextEditingController();
-  TextEditingController _contentController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _contentController = TextEditingController();
   late DbHelper dbHelper;
 
   @override
@@ -42,7 +42,7 @@ class _NoteEditPageState extends State<NoteEditPage> {
   }
 
   void _deleteNote() async {
-    if (widget.note != null) {
+    if (widget.note?.id != null) {
       await dbHelper.deleteNote(widget.note!.id!);
       Navigator.pop(context);
     }
@@ -52,18 +52,11 @@ class _NoteEditPageState extends State<NoteEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.note == null ? 'Add Note' : 'Edit Note', style: TextStyle(fontWeight: FontWeight.bold),),
+        title: Text(widget.note == null ? 'Add Note' : 'Edit Note'),
         actions: [
-          IconButton(
-            onPressed: _saveNote, 
-            icon: Icon(Icons.save)
-          ),
-          
+          IconButton(onPressed: _saveNote, icon: Icon(Icons.save)),
           if (widget.note != null)
-            IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: _deleteNote,
-            ),
+            IconButton(onPressed: _deleteNote, icon: Icon(Icons.delete)),
         ],
       ),
       body: SingleChildScrollView(
@@ -76,19 +69,19 @@ class _NoteEditPageState extends State<NoteEditPage> {
                 TextFormField(
                   controller: _titleController,
                   decoration: InputDecoration(labelText: 'Title'),
-                  validator: (val) => val!.isEmpty ? 'Enter title' : null,
+                  validator: (val) => val == null || val.isEmpty ? 'Enter title' : null,
                 ),
                 SizedBox(height: 16),
                 TextFormField(
                   controller: _contentController,
                   decoration: InputDecoration(labelText: 'Content'),
                   maxLines: 8,
-                  validator: (val) => val!.isEmpty ? 'Enter content' : null,
+                  validator: (val) => val == null || val.isEmpty ? 'Enter content' : null,
                 ),
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _saveNote,
-                  child: Text('Save', style: TextStyle(fontWeight: FontWeight.bold),),
+                  child: Text('Save'),
                 ),
               ],
             ),
