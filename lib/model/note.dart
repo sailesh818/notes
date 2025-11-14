@@ -1,26 +1,59 @@
-class Note {
-  int? id;
-  String title;
-  String content;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-  Note({this.id, required this.title, required this.content});
+class Note {
+  final String id;
+  final String title;
+  final String content;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? userId; // optional for migration
+
+  Note({
+    required this.id,
+    required this.title,
+    required this.content,
+    required this.createdAt,
+    required this.updatedAt,
+    this.userId,
+  });
 
   Map<String, dynamic> toMap() {
-    var map = <String, dynamic>{
+    return {
       'title': title,
       'content': content,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
+      if (userId != null) 'userId': userId,
     };
-    if (id != null) {
-      map['id'] = id;
-    }
-    return map;
   }
 
-  factory Note.fromMap(Map<String, dynamic> map) {
+  Note copyWith({
+    String? id,
+    String? title,
+    String? content,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? userId,
+  }) {
     return Note(
-      id: map['id'],
-      title: map['title'],
-      content: map['content'],
+      id: id ?? this.id,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      userId: userId ?? this.userId,
+    );
+  }
+
+  factory Note.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!;
+    return Note(
+      id: doc.id,
+      title: data['title'] ?? '',
+      content: data['content'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate().toUtc() ?? DateTime.now().toUtc(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate().toUtc() ?? DateTime.now().toUtc(),
+      userId: data['userId'],
     );
   }
 }

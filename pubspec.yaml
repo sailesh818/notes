@@ -1,5 +1,5 @@
 name: notes_todo
-description: "A new Flutter project."
+description: "A simple notes todo app for daily use."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -36,6 +36,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   path_provider: ^2.1.5
   sqflite: ^2.4.2
+  firebase_core: ^4.2.1
+  firebase_auth: ^6.1.2
+  cloud_firestore: ^6.1.0
+
 
 dev_dependencies:
   flutter_test:
@@ -46,7 +50,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
 
 
