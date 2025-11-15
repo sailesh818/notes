@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:notes_todo/payment/page/payment_page.dart';
 
 class GiftPage extends StatefulWidget {
@@ -10,6 +11,66 @@ class GiftPage extends StatefulWidget {
 
 class _GiftPageState extends State<GiftPage> {
   bool _isDiscountUnlocked = false;
+
+  RewardedAd? _rewardedAd;
+  bool _isAdLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRewardedAd();
+  }
+
+  void _loadRewardedAd() {
+    setState(() => _isAdLoading = true);
+
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-3940256099942544/5224354917', // Test Ad Unit
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+          setState(() => _isAdLoading = false);
+        },
+        onAdFailedToLoad: (error) {
+          _rewardedAd = null;
+          setState(() => _isAdLoading = false);
+          debugPrint('RewardedAd failed to load: $error');
+        },
+      ),
+    );
+  }
+
+  void _showRewardedAd() {
+    if (_rewardedAd == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Ad not loaded yet, try again")),
+      );
+      _loadRewardedAd();
+      return;
+    }
+
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _loadRewardedAd(); // Load next ad
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _loadRewardedAd();
+        debugPrint('Ad failed to show: $error');
+      },
+    );
+
+    _rewardedAd!.show(onUserEarnedReward: (ad, reward) {
+      setState(() => _isDiscountUnlocked = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("✅ 10% Discount Unlocked!")),
+      );
+    });
+
+    _rewardedAd = null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,17 +111,15 @@ class _GiftPageState extends State<GiftPage> {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            // Remove ad button — replaced with a simple discount button (optional)
+            // ⭐ Unlock Discount Button
             ElevatedButton.icon(
-              onPressed: () {
-                setState(() => _isDiscountUnlocked = true);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("10% Discount Unlocked!")),
-                );
-              },
+              onPressed: _isDiscountUnlocked || _isAdLoading
+                  ? null
+                  : _showRewardedAd,
               icon: const Icon(Icons.card_giftcard),
-              label: const Text("Unlock 10% Discount"),
+              label: Text(_isDiscountUnlocked
+                  ? "Discount Unlocked"
+                  : (_isAdLoading ? "Loading Ad..." : "Unlock 10% Discount")),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
