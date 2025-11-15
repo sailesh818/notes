@@ -1,16 +1,16 @@
-# notes_todo
+# Notes To-Do App (Flutter + Play Store Published)
 
-A new Flutter project.
+A clean and simple Notes app built with Flutter. Users can add, edit, delete, and select notes with a beautiful Material UI. Includes a “Buy Gifts” page for user support motivation.
 
-## Getting Started
+## Features
+- Add, edit, delete, read, and select notes
+- Clean Material UI
+- “Buy Gifts” page (non-payment version)
+- Offline first
+- Built with Flutter 3.x
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Setup
+1. Open in VS Code or Android Studio
+2. Run `flutter pub get`
+3. Build: `flutter build apk` or `flutter run`
+4. Customize app name & icon as you wish

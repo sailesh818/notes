@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
-//import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:notes_todo/pages/note_list.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  //MobileAds.instance.initialize();
 
+  // Initialize Google Mobile Ads SDK
+  await MobileAds.instance.initialize();
+
+  // Lock orientation to portrait only
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -42,7 +46,7 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.deepPurple,
         ),
       ),
-      home: NoteListPage()
+      home: NoteListPage(),
     );
   }
 }
