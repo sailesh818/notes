@@ -11,65 +11,106 @@ class GiftPage extends StatefulWidget {
 
 class _GiftPageState extends State<GiftPage> {
   bool _isDiscountUnlocked = false;
+  int _userPoints = 0; // ⭐ User points for watching ads
 
-  RewardedAd? _rewardedAd;
+  RewardedInterstitialAd? _rewardedInterstitialAd;
   bool _isAdLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadRewardedAd();
+    _loadRewardedInterstitialAd();
   }
 
-  void _loadRewardedAd() {
+  // -----------------------------
+  // Load Rewarded Interstitial Ad
+  // -----------------------------
+  void _loadRewardedInterstitialAd() {
     setState(() => _isAdLoading = true);
 
-    RewardedAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/5224354917', // Test Ad Unit
+    RewardedInterstitialAd.load(
+      adUnitId: 'ca-app-pub-6704136477020125/1325699739',
+      //adUnitId: 'ca-app-pub-3940256099942544/1033173712', //testInterstitialAdUnitId
+      // interstellier test adunit here const String testInterstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
       request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
+      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
         onAdLoaded: (ad) {
-          _rewardedAd = ad;
+          _rewardedInterstitialAd = ad;
           setState(() => _isAdLoading = false);
         },
         onAdFailedToLoad: (error) {
-          _rewardedAd = null;
+          _rewardedInterstitialAd = null;
           setState(() => _isAdLoading = false);
-          debugPrint('RewardedAd failed to load: $error');
         },
       ),
     );
   }
 
-  void _showRewardedAd() {
-    if (_rewardedAd == null) {
+  // -----------------------------
+  // Show Rewarded Interstitial Ad (Used for BOTH discount + points)
+  // -----------------------------
+  void _showAdForPoints() {
+    if (_rewardedInterstitialAd == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Ad not loaded yet, try again")),
+        const SnackBar(content: Text("Ad not ready yet, try again")),
       );
-      _loadRewardedAd();
+      _loadRewardedInterstitialAd();
       return;
     }
 
-    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+    _rewardedInterstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
-        _loadRewardedAd(); // Load next ad
+        _loadRewardedInterstitialAd();
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
-        _loadRewardedAd();
-        debugPrint('Ad failed to show: $error');
+        _loadRewardedInterstitialAd();
       },
     );
 
-    _rewardedAd!.show(onUserEarnedReward: (ad, reward) {
-      setState(() => _isDiscountUnlocked = true);
+    _rewardedInterstitialAd!.show(onUserEarnedReward: (ad, reward) {
+      setState(() {
+        _userPoints += 10; // ⭐ Earn 10 points per ad
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ 10% Discount Unlocked!")),
+        SnackBar(content: Text("🎉 You earned 10 points! Total: $_userPoints")),
       );
     });
 
-    _rewardedAd = null;
+    _rewardedInterstitialAd = null;
+  }
+
+  // Discount ad
+  void _showRewardedInterstitialAd() {
+    if (_rewardedInterstitialAd == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Ad not loaded yet, try again")),
+      );
+      _loadRewardedInterstitialAd();
+      return;
+    }
+
+    _rewardedInterstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _loadRewardedInterstitialAd();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _loadRewardedInterstitialAd();
+      },
+    );
+
+    _rewardedInterstitialAd!.show(onUserEarnedReward: (ad, reward) {
+      setState(() => _isDiscountUnlocked = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("🎁 10% Discount Unlocked!")),
+      );
+    });
+
+    _rewardedInterstitialAd = null;
   }
 
   @override
@@ -115,7 +156,7 @@ class _GiftPageState extends State<GiftPage> {
             ElevatedButton.icon(
               onPressed: _isDiscountUnlocked || _isAdLoading
                   ? null
-                  : _showRewardedAd,
+                  : _showRewardedInterstitialAd,
               icon: const Icon(Icons.card_giftcard),
               label: Text(_isDiscountUnlocked
                   ? "Discount Unlocked"
@@ -127,11 +168,8 @@ class _GiftPageState extends State<GiftPage> {
             ),
 
             if (_isDiscountUnlocked)
-              const Text(
-                "✅ 10% Discount Unlocked!",
-                style: TextStyle(
-                    color: Colors.green, fontWeight: FontWeight.bold),
-              ),
+              const Text("🎁 10% Discount Unlocked!",
+                  style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
 
             const SizedBox(height: 12),
 
@@ -178,11 +216,7 @@ class _GiftPageState extends State<GiftPage> {
         children: [
           Image.network(gift['image'], height: 80, width: 80),
           const SizedBox(height: 10),
-          Text(
-            gift['name'],
-            style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          Text(gift['name'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           Text(
             '\$${gift['price']}',
@@ -198,6 +232,9 @@ class _GiftPageState extends State<GiftPage> {
     );
   }
 
+  // -----------------------------
+  // BOTTOM SHEET WITH WATCH AD BUTTON
+  // -----------------------------
   void _showGiftDetails(BuildContext context, Map<String, dynamic> gift) {
     showModalBottomSheet(
       context: context,
@@ -213,18 +250,33 @@ class _GiftPageState extends State<GiftPage> {
             children: [
               Image.network(gift['image'], height: 100, width: 100),
               const SizedBox(height: 10),
-              Text(gift['name'],
-                  style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(gift['name'], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
               Text(
                 '\$${gift['price']}',
                 style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.deepPurple,
-                    fontWeight: FontWeight.w500),
+                  fontSize: 18,
+                  color: Colors.deepPurple,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
+
               const SizedBox(height: 20),
+
+              // ⭐ WATCH AD BUTTON FOR POINTS
+              ElevatedButton.icon(
+                onPressed: _isAdLoading ? null : _showAdForPoints,
+                icon: const Icon(Icons.ondemand_video),
+                label: const Text('Watch Ad & Earn 10 Points'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // 🟣 Proceed to payment
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);

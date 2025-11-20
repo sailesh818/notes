@@ -20,7 +20,12 @@ class DbHelper {
   Future<Database> _initDatabase() async {
     Directory directory = await getApplicationDocumentsDirectory();
     String path = join(directory.path, 'notes.db');
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
+    return await openDatabase(
+      path,
+      version: 2, // 🔔 Increment version to apply migration
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future _onCreate(Database db, int version) async {
@@ -28,9 +33,21 @@ class DbHelper {
       CREATE TABLE notes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
-        content TEXT
+        content TEXT,
+        createdAt TEXT,
+        updatedAt TEXT,
+        reminderTime TEXT,
+        userId TEXT
       )
     ''');
+  }
+
+  // 🔔 Migration for existing users
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE notes ADD COLUMN reminderTime TEXT');
+      await db.execute('ALTER TABLE notes ADD COLUMN userId TEXT');
+    }
   }
 
   Future<int> insertNote(Map<String, dynamic> row) async {
