@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 import 'package:notes_todo/auth/page/login_page.dart';
 import '../services/notes_service.dart';
 import '../model/note.dart';
@@ -18,17 +20,66 @@ class _NoteListPageState extends State<NoteListPage> {
   final Set<String> _selected = {};
   User? _user;
 
+  InterstitialAd? _interstitialAd;
+
   @override
   void initState() {
     super.initState();
     _user = FirebaseAuth.instance.currentUser;
 
-    // Listen for login/signout changes
+    // Listen to auth changes
     FirebaseAuth.instance.authStateChanges().listen((user) {
       setState(() {
         _user = user;
       });
     });
+
+    _loadAd();
+  }
+
+  /// Load Interstitial Ad
+  void _loadAd() {
+    InterstitialAd.load(
+      //adUnitId: "ca-app-pub-3940256099942544/1033173712", // TEST ID
+      adUnitId: "ca-app-pub-6704136477020125/7400933744",  //real ads Id
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+        },
+        onAdFailedToLoad: (error) {
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  /// Show Ad → then navigate
+  void _showAdThenNavigate() {
+    if (_interstitialAd != null) {
+      _interstitialAd!.fullScreenContentCallback =
+          FullScreenContentCallback(onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _loadAd();
+        _goToAddNote();
+      }, onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _loadAd();
+        _goToAddNote();
+      });
+
+      _interstitialAd!.show();
+      _interstitialAd = null;
+    } else {
+      _goToAddNote();
+    }
+  }
+
+  void _goToAddNote() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NoteEditPage()),
+    );
   }
 
   void _toggle(String id) {
@@ -89,7 +140,6 @@ class _NoteListPageState extends State<NoteListPage> {
       ),
       body: Column(
         children: [
-          // Show login prompt if user not logged in
           if (!isLoggedIn)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -113,7 +163,6 @@ class _NoteListPageState extends State<NoteListPage> {
               ),
             ),
 
-          // GIFTS BUTTON
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Align(
@@ -138,10 +187,13 @@ class _NoteListPageState extends State<NoteListPage> {
             ),
           ),
 
-          // NOTES LIST
           Expanded(
             child: StreamBuilder<List<Note>>(
-              stream: _service.watchNotes(userId: _user?.uid),
+              // ⚡ Updated: watch notes and sort by createdAt descending
+              stream: _service.watchNotes(userId: _user?.uid).map((notes) {
+                notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                return notes;
+              }),
               builder: (context, snap) {
                 if (snap.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -237,12 +289,7 @@ class _NoteListPageState extends State<NoteListPage> {
       floatingActionButton: selecting
           ? null
           : FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NoteEditPage()),
-                );
-              },
+              onPressed: _showAdThenNavigate,
               child: const Icon(Icons.add),
               tooltip: 'Add Note',
             ),

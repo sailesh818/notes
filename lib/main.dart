@@ -4,6 +4,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:notes_todo/pages/note_list.dart';
 import 'firebase_options.dart';
+import 'ads/app_open_ad_manager.dart';
+
+import 'package:notes_todo/services/alarm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,8 +18,12 @@ void main() async {
 
   // Initialize Google Mobile Ads SDK
   await MobileAds.instance.initialize();
+  await AppOpenAdManager.loadAd(); // Load App Open Ad early
 
-  // Lock orientation to portrait only
+  // 🔔 Initialize Alarm Service (replaces previous NotificationService)
+  await AlarmService.init();
+
+  // Lock orientation to portrait
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -25,8 +32,32 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Show App Open Ad after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppOpenAdManager.showAdIfAvailable();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Show ad when returning to app
+      AppOpenAdManager.showAdIfAvailable();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +77,7 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.deepPurple,
         ),
       ),
-      home: NoteListPage(),
+      home: const NoteListPage(),
     );
   }
 }
