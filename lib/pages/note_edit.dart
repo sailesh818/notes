@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:notes_todo/pages/note_list.dart';
 import '../model/note.dart';
 import '../services/notes_service.dart';
 import '../services/alarm_service.dart';
@@ -107,7 +108,13 @@ class _NoteEditPageState extends State<NoteEditPage> {
       await AlarmService.stopAlarm(widget.note!.id.hashCode);
     }
 
-    if (mounted) Navigator.pop(context);
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_)=> NoteListPage()), 
+        (route)=> false,
+      );
+    }
   }
 
   /// Delete note and cancel any alarm

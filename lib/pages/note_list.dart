@@ -21,6 +21,7 @@ class _NoteListPageState extends State<NoteListPage> {
   User? _user;
 
   InterstitialAd? _interstitialAd;
+  bool _isAdLoading = false;
 
   @override
   void initState() {
@@ -34,49 +35,65 @@ class _NoteListPageState extends State<NoteListPage> {
       });
     });
 
-    _loadAd();
+    // Preload first ad
+    _preloadAd();
   }
 
-  /// Load Interstitial Ad
-  void _loadAd() {
+  /// Preload Interstitial Ad
+  void _preloadAd() {
+    if (_isAdLoading || _interstitialAd != null) return;
+
+    _isAdLoading = true;
+
     InterstitialAd.load(
       //adUnitId: "ca-app-pub-3940256099942544/1033173712", // TEST ID
-      adUnitId: "ca-app-pub-6704136477020125/7400933744",  //real ads Id
+      adUnitId: "ca-app-pub-6704136477020125/7400933744", // read ad unit noteadd unit
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialAd = ad;
+          _isAdLoading = false;
         },
         onAdFailedToLoad: (error) {
+          print("InterstitialAd failed to load: $error");
           _interstitialAd = null;
+          _isAdLoading = false;
         },
       ),
     );
   }
 
-  /// Show Ad → then navigate
+  /// Show Ad if loaded, then navigate
   void _showAdThenNavigate() {
     if (_interstitialAd != null) {
       _interstitialAd!.fullScreenContentCallback =
-          FullScreenContentCallback(onAdDismissedFullScreenContent: (ad) {
-        ad.dispose();
-        _loadAd();
-        _goToAddNote();
-      }, onAdFailedToShowFullScreenContent: (ad, error) {
-        ad.dispose();
-        _loadAd();
-        _goToAddNote();
-      });
+          FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _interstitialAd = null;
+          _preloadAd();
+          _goToAddNoteAndRemoveCurrent(); // navigate without returning
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          print("Ad failed to show: $error");
+          ad.dispose();
+          _interstitialAd = null;
+          _preloadAd();
+          _goToAddNoteAndRemoveCurrent(); // fallback navigation
+        },
+      );
 
       _interstitialAd!.show();
-      _interstitialAd = null;
     } else {
-      _goToAddNote();
+      // No ad loaded → navigate immediately
+      _goToAddNoteAndRemoveCurrent();
+      _preloadAd(); // preload next ad
     }
   }
 
-  void _goToAddNote() {
-    Navigator.push(
+  /// Navigate to NoteEditPage and remove NoteListPage from stack
+  void _goToAddNoteAndRemoveCurrent() {
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const NoteEditPage()),
     );
@@ -97,6 +114,12 @@ class _NoteListPageState extends State<NoteListPage> {
       await _service.deleteNote(id, userId: _user?.uid);
     }
     setState(() => _selected.clear());
+  }
+
+  @override
+  void dispose() {
+    _interstitialAd?.dispose();
+    super.dispose();
   }
 
   @override
@@ -162,7 +185,6 @@ class _NoteListPageState extends State<NoteListPage> {
                 ),
               ),
             ),
-
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Align(
@@ -186,10 +208,8 @@ class _NoteListPageState extends State<NoteListPage> {
               ),
             ),
           ),
-
           Expanded(
             child: StreamBuilder<List<Note>>(
-              // ⚡ Updated: watch notes and sort by createdAt descending
               stream: _service.watchNotes(userId: _user?.uid).map((notes) {
                 notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
                 return notes;

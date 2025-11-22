@@ -29,7 +29,7 @@ class _GiftPageState extends State<GiftPage> {
     setState(() => _isAdLoading = true);
 
     RewardedInterstitialAd.load(
-      adUnitId: 'ca-app-pub-6704136477020125/1325699739',
+      adUnitId: 'ca-app-pub-6704136477020125/1325699739', //real test ad unit Id
       //adUnitId: 'ca-app-pub-3940256099942544/1033173712', //testInterstitialAdUnitId
       // interstellier test adunit here const String testInterstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
       request: const AdRequest(),
